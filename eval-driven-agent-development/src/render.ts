@@ -35,22 +35,38 @@ export async function renderPptx(pptxPath: string, outDir: string): Promise<stri
   // --pull=never makes a missing image fail fast instead of trying Docker Hub.
   // Filenames are passed as positional args ($1, $2) rather than interpolated
   // into the sh -c script, so shell metacharacters in paths can't break out.
-  await execFileP("docker", [
-    "run",
-    "--rm",
-    "--pull=never",
-    "-v",
-    `${inputDir}:/in:ro`,
-    "-v",
-    `${absOut}:/out`,
-    IMAGE,
-    "sh",
-    "-c",
-    'soffice --headless --convert-to pdf --outdir /tmp "/in/$1" && pdftoppm -jpeg -r 120 "/tmp/$2.pdf" /out/slide',
-    "sh",
-    basename,
-    stem,
-  ]);
+  // Try Docker first; fall back to local soffice+pdftoppm if the daemon is absent.
+  // If both fail, warn and return [] so code-only graders still run.
+  try {
+    await execFileP("docker", [
+      "run", "--rm", "--pull=never",
+      "-v", `${inputDir}:/in:ro`,
+      "-v", `${absOut}:/out`,
+      IMAGE, "sh", "-c",
+      'soffice --headless --convert-to pdf --outdir /tmp "/in/$1" && pdftoppm -jpeg -r 120 "/tmp/$2.pdf" /out/slide',
+      "sh", basename, stem,
+    ]);
+  } catch (dockerErr: unknown) {
+    const msg = dockerErr instanceof Error ? dockerErr.message : String(dockerErr);
+    if (!msg.includes("docker.sock") && !msg.includes("docker API")) {
+      console.warn(`render: docker failed (${msg}), trying local soffice...`);
+    }
+    // Docker unavailable — run soffice and pdftoppm directly on the host.
+    const tmpDir = await fs.mkdtemp("/tmp/pptx-render-");
+    const tmpPdf = path.join(tmpDir, `${stem}.pdf`);
+    try {
+      await execFileP("soffice", [
+        "--headless", "--convert-to", "pdf", "--outdir", tmpDir, absPptx,
+      ]);
+      await execFileP("pdftoppm", ["-jpeg", "-r", "120", tmpPdf, path.join(absOut, "slide")]);
+    } catch (localErr: unknown) {
+      const localMsg = localErr instanceof Error ? localErr.message : String(localErr);
+      console.warn(`render: local soffice also failed (${localMsg}), skipping render`);
+      return [];
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+  }
 
   // Collect the produced slide-N.jpg files and return them in slide order
   // (numeric collation so slide-10 comes after slide-9, not after slide-1).

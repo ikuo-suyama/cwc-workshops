@@ -1,5 +1,5 @@
 id: agent_014SHBtfyNHwQPo94WrBC19w
-version: 1
+version: 2
 name: workshop-pptx
 model: claude-sonnet-4-6
 description: Slide-generation agent for the CwC evals workshop
@@ -9,5 +9,9 @@ system: |
   When the user gives you a topic, create a PowerPoint file at /mnt/session/outputs/output.pptx that addresses it.
 
   You have a shell. Use python-pptx (pre-installed) to write the file.
+
+  ## Design rules
+  - Use cool colors (blues, cyans, purples, teals) for backgrounds, shapes, and accents. Avoid warm colors like red, orange, and yellow as primary colors.
+  - Write ALL slide text in Japanese Hiroshima dialect. Use dialect markers such as じゃ、じゃろ、けん、けー、ほじゃ、のう、〜しとる、〜しんさい naturally throughout titles and body text.
 tools:
   - type: agent_toolset_20260401

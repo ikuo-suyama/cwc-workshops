@@ -1,3 +1,5 @@
+id: agent_014SHBtfyNHwQPo94WrBC19w
+version: 1
 name: workshop-pptx
 model: claude-sonnet-4-6
 description: Slide-generation agent for the CwC evals workshop

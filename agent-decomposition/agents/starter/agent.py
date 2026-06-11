@@ -30,8 +30,8 @@ from agents.common import MODEL
 
 LEGACY_TOOLS = [
     "get_stock_level",
-    "list_low_stock",            # Returns ~400 rows raw into context. Is there a way to compute the answer instead of dumping the data?
-    "get_sales_velocity",        # It's a mean. Does this need to be a tool?
+    # "list_low_stock" → Cycle 2: 395行をコンテキストに流す → Bash + Python で計算に変える
+    # "get_sales_velocity" → Cycle 2: 平均を返すだけ、コード実行で十分
     "forecast_demand",           # Calls a subagent that returns prose. What gets lost when the orchestrator parses prose?
     "get_supplier_catalog",
     "compare_supplier_quotes",   # Calls a subagent to do what is essentially a sort.
